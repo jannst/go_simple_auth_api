@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source "$(dirname "$0")"/common
+
+export $(cat ${project_env} | xargs) && go run "${basedir}/src/cmd/main.go" -port 4000

@@ -1,0 +1,161 @@
+swagger: "2.0"
+info:
+  description: "User and Session Management API"
+  version: "1.0.0"
+  title: "Auth"
+host: "localhost:4000"
+basePath: "/auth"
+consumes:
+  - application/json
+produces:
+  - application/json
+tags:
+  - name: "User"
+    description: "User operations"
+schemes:
+  - "http"
+paths:
+  /register:
+    post:
+      operationId: register
+      tags:
+        - "User"
+      summary: Register new User
+      parameters:
+        - in: body
+          name: body
+          description: New User Object
+          required: true
+          schema:
+            $ref: "#/definitions/NewUser"
+      responses:
+        default:
+          description: "successful operation"
+  /login:
+    post:
+      operationId: "login"
+      tags:
+        - "User"
+      summary: "User login"
+      description: ""
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: object
+            description: "User login information"
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                maxLength: 256
+              password:
+                type: string
+                minLength: 8
+                maxLength: 256
+                example: "VerySecureLol_69"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: '#/definitions/AccessTokenResponse'
+          headers:
+            X-Expires-After:
+              type: "string"
+              format: "date-time"
+              description: "date in UTC when token expires"
+        "400":
+          description: "Invalid username/password supplied"
+  /logout:
+    post:
+      operationId: "logout"
+      tags:
+        - "User"
+      summary: "User logout"
+      security:
+        - ApiKeyAuth: []
+      parameters: []
+      responses:
+        "204":
+          description: "successful operation"
+  /userinfo:
+    get:
+      operationId: "info"
+      tags:
+        - "User"
+      summary: "Get Information about the current user"
+      security:
+        - ApiKeyAuth: []
+      description: ""
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-TOKEN
+definitions:
+  BaseUser:
+    type: object
+    required:
+      - username
+      - email
+    properties:
+      username:
+        type: string
+        minLength: 4
+        maxLength: 64
+        example: "JanST"
+      email:
+        type: string
+        format: email
+        maxLength: 256
+  NewUser:
+    allOf:
+      - $ref: '#/definitions/BaseUser'
+      - type: "object"
+        required:
+          - username
+          - email
+          - password
+        properties:
+          password:
+            type: string
+            minLength: 8
+            maxLength: 256
+            example: "VerySecureLol_69"
+  User:
+    allOf:
+      - $ref: '#/definitions/BaseUser'
+      - type: object
+        required:
+          - id
+          - user_role
+        properties:
+          id:
+            type: integer
+            format: uint32
+          user_role:
+            type: string
+            description: "User Role"
+  AccessTokenResponse:
+    required:
+      - token
+      - user
+    properties:
+      token:
+        type: string
+        minLength: 32
+        maxLength: 32
+        pattern: '[a-f0-9]{32}'
+        example: dce7fce4dd4a41371fb6b4889d957974ba158d8dec805c8046e4ed95c7414ce6
+        description: Token to be included in X-API-TOKEN Header for secured endpoints
+      user:
+        $ref: '#/definitions/User'

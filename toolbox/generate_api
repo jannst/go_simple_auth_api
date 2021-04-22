@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source "$(dirname "$0")"/common
+
+#add this flag to force config regeneration: --regenerate-configureapi
+${rootdir}/bin/swagger generate server \
+  -f ${basedir}/spec/auth_service.yml \
+  -A auth --main-package=. \
+  -t ${basedir}/src \
+  --principal "github.com/jannst/go_start/auth_service/src.Session" \
+  --server-package=api \
+  --model-package=apimodel
