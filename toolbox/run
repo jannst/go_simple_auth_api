@@ -1,5 +1,5 @@
 #!/bin/bash
 
-source "$(dirname "$0")"/common
+basedir="$(dirname $0)/.."
 
-export $(cat ${project_env} | xargs) && ${rootdir}/bin/go-reload "${basedir}/src/cmd/main.go" --port 4000
+go run "${basedir}/src/cmd/main.go" --port 4000

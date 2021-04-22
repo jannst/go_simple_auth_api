@@ -1,9 +1,0 @@
-#!/bin/bash
-
-set -e
-
-basedir=$(readlink -f "$(dirname "$0")""/..")
-source "${basedir}/../bin/common"
-project_env="${basedir}/.env"
-
-

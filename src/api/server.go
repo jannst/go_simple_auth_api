@@ -25,7 +25,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"golang.org/x/net/netutil"
 
-	"github.com/jannst/go_start/auth_service/src/api/operations"
+	"haw-hamburg.de/cloudWP/src/api/operations"
 )
 
 const (

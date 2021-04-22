@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/jannst/go_start/auth_service/src"
+	"haw-hamburg.de/cloudWP/src"
 )
 
 // InfoHandlerFunc turns a function with the right signature into a info handler

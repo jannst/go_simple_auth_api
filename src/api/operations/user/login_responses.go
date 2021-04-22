@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/jannst/go_start/auth_service/src/apimodel"
+	"haw-hamburg.de/cloudWP/src/apimodel"
 )
 
 // LoginOKCode is the HTTP code returned for type LoginOK

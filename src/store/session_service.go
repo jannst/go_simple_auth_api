@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
-	"github.com/jannst/go_start/auth_service/src"
+	"haw-hamburg.de/cloudWP/src"
 	"regexp"
 )
 

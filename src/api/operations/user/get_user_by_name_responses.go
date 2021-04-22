@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/jannst/go_start/auth_service/src/apimodel"
+	"haw-hamburg.de/cloudWP/src/apimodel"
 )
 
 // GetUserByNameOKCode is the HTTP code returned for type GetUserByNameOK

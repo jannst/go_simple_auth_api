@@ -19,8 +19,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/jannst/go_start/auth_service/src"
-	"github.com/jannst/go_start/auth_service/src/api/operations/user"
+	"haw-hamburg.de/cloudWP/src"
+	"haw-hamburg.de/cloudWP/src/api/operations/user"
 )
 
 // NewAuthAPI creates a new Auth instance
