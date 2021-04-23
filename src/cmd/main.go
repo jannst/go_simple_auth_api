@@ -25,6 +25,7 @@ func main() {
 
 	api := operations.NewAuthAPI(swaggerSpec)
 	server := swaggerapisrv.NewServer(api)
+	server.Port = 4000
 	defer server.Shutdown()
 
 	parser := flags.NewParser(server, flags.Default)

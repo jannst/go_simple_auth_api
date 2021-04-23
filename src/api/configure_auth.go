@@ -50,19 +50,19 @@ func configureAPI(api *operations.AuthAPI) http.Handler {
 		fmt.Printf("userId: %d", principal.UserId)
 		userById, err := sessionService.GetUserById(principal.UserId)
 		if err != nil {
-			return user.NewInfoOK().WithPayload(userById)
-		} else {
 			fmt.Println(err)
 			return user.NewInfoInternalServerError()
+		} else {
+			return user.NewInfoOK().WithPayload(userById)
 		}
 	})
 
 	api.UserLoginHandler = user.LoginHandlerFunc(func(params user.LoginParams) middleware.Responder {
 		session, err := sessionService.Login(params.Body)
 		if err != nil {
+			fmt.Println(err)
 			return user.NewLoginBadRequest()
 		} else {
-			fmt.Println(err)
 			return user.NewLoginOK().WithPayload(session)
 		}
 	})
@@ -70,20 +70,20 @@ func configureAPI(api *operations.AuthAPI) http.Handler {
 	api.UserLogoutHandler = user.LogoutHandlerFunc(func(params user.LogoutParams, principal *src.Session) middleware.Responder {
 		err := sessionService.Logout(principal)
 		if err != nil {
-			return user.NewLogoutUserOK()
-		} else {
 			fmt.Println(err)
 			return user.NewLogoutInternalServerError()
+		} else {
+			return user.NewLogoutUserOK()
 		}
 	})
 
 	api.UserRegisterHandler = user.RegisterHandlerFunc(func(params user.RegisterParams) middleware.Responder {
 		err := sessionService.CreateUser(*params.Body)
 		if err != nil {
-			return user.NewRegisterNoContent()
-		} else {
 			fmt.Println(err)
 			return user.NewRegisterInternalServerError()
+		} else {
+			return user.NewRegisterNoContent()
 		}
 	})
 
