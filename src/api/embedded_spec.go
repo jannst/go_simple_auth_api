@@ -86,7 +86,10 @@ func init() {
             }
           },
           "400": {
-            "description": "Invalid username/password supplied"
+            "description": "Invalid username/password supplied",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -106,6 +109,12 @@ func init() {
         "responses": {
           "204": {
             "description": "successful operation"
+          },
+          "500": {
+            "description": "logout failed",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -129,8 +138,14 @@ func init() {
           }
         ],
         "responses": {
-          "default": {
-            "description": "successful operation"
+          "204": {
+            "description": "user created"
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -152,6 +167,12 @@ func init() {
             "description": "successful operation",
             "schema": {
               "$ref": "#/definitions/User"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
             }
           }
         }
@@ -175,6 +196,17 @@ func init() {
         },
         "user": {
           "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "ApiError": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
         }
       }
     },
@@ -229,17 +261,12 @@ func init() {
         {
           "type": "object",
           "required": [
-            "id",
-            "user_role"
+            "id"
           ],
           "properties": {
             "id": {
               "type": "integer",
               "format": "uint32"
-            },
-            "user_role": {
-              "description": "User Role",
-              "type": "string"
             }
           }
         }
@@ -329,7 +356,10 @@ func init() {
             }
           },
           "400": {
-            "description": "Invalid username/password supplied"
+            "description": "Invalid username/password supplied",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -349,6 +379,12 @@ func init() {
         "responses": {
           "204": {
             "description": "successful operation"
+          },
+          "500": {
+            "description": "logout failed",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -372,8 +408,14 @@ func init() {
           }
         ],
         "responses": {
-          "default": {
-            "description": "successful operation"
+          "204": {
+            "description": "user created"
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
           }
         }
       }
@@ -395,6 +437,12 @@ func init() {
             "description": "successful operation",
             "schema": {
               "$ref": "#/definitions/User"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
             }
           }
         }
@@ -418,6 +466,17 @@ func init() {
         },
         "user": {
           "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "ApiError": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
         }
       }
     },
@@ -472,17 +531,12 @@ func init() {
         {
           "type": "object",
           "required": [
-            "id",
-            "user_role"
+            "id"
           ],
           "properties": {
             "id": {
               "type": "integer",
               "format": "uint32"
-            },
-            "user_role": {
-              "description": "User Role",
-              "type": "string"
             }
           }
         }

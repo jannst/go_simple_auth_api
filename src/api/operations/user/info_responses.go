@@ -56,3 +56,47 @@ func (o *InfoOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer
 		}
 	}
 }
+
+// InfoInternalServerErrorCode is the HTTP code returned for type InfoInternalServerError
+const InfoInternalServerErrorCode int = 500
+
+/*InfoInternalServerError Internal server error
+
+swagger:response infoInternalServerError
+*/
+type InfoInternalServerError struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *apimodel.APIError `json:"body,omitempty"`
+}
+
+// NewInfoInternalServerError creates InfoInternalServerError with default headers values
+func NewInfoInternalServerError() *InfoInternalServerError {
+
+	return &InfoInternalServerError{}
+}
+
+// WithPayload adds the payload to the info internal server error response
+func (o *InfoInternalServerError) WithPayload(payload *apimodel.APIError) *InfoInternalServerError {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the info internal server error response
+func (o *InfoInternalServerError) SetPayload(payload *apimodel.APIError) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *InfoInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(500)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}

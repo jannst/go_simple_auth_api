@@ -4,6 +4,10 @@ package api
 
 import (
 	"crypto/tls"
+	"fmt"
+	"github.com/rs/zerolog/log"
+	"haw-hamburg.de/cloudWP/src/middlewares"
+	"haw-hamburg.de/cloudWP/src/store"
 	"net/http"
 
 	"github.com/go-openapi/errors"
@@ -15,63 +19,73 @@ import (
 	"haw-hamburg.de/cloudWP/src/api/operations/user"
 )
 
-//go:generate swagger generate server --target ../../src --name Auth --spec ../../spec/auth_service.yml --model-package apimodel --server-package api --principal haw-hamburg.de/cloudWP/src.Session
+//go:generate swagger generate server --target ../../src --name Auth --spec ../../spec/auth_service.yml --model-package apimodel --server-package api --principal github.com/jannst/go_start/auth_service/src.Session
 
 func configureFlags(api *operations.AuthAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
 func configureAPI(api *operations.AuthAPI) http.Handler {
-	// configure the api here
 	api.ServeError = errors.ServeError
 
-	// Set your custom logger if needed. Default one is log.Printf
-	// Expected interface func(string, ...interface{})
-	//
-	// Example:
-	// api.Logger = log.Printf
+	//create our session service
+	sessionService := store.NewSessionService()
 
 	api.UseSwaggerUI()
-	// To continue using redoc as your UI, uncomment the following line
-	// api.UseRedoc()
-
 	api.JSONConsumer = runtime.JSONConsumer()
-
 	api.JSONProducer = runtime.JSONProducer()
 
 	// Applies when the "X-API-TOKEN" header is set
-	if api.APIKeyAuthAuth == nil {
-		api.APIKeyAuthAuth = func(token string) (*src.Session, error) {
-			return nil, errors.NotImplemented("api key auth (ApiKeyAuth) X-API-TOKEN from header param [X-API-TOKEN] has not yet been implemented")
+	api.APIKeyAuthAuth = func(token string) (*src.Session, error) {
+		session, err := sessionService.FetchSession(token)
+		if err != nil {
+			log.Error().Err(err).Msg("could not fetch token")
+			return nil, errors.New(http.StatusUnauthorized, "invalid token")
+		} else {
+			return session, nil
 		}
 	}
 
-	// Set your custom authorizer if needed. Default one is security.Authorized()
-	// Expected interface runtime.Authorizer
-	//
-	// Example:
-	// api.APIAuthorizer = security.Authorized()
+	api.UserInfoHandler = user.InfoHandlerFunc(func(params user.InfoParams, principal *src.Session) middleware.Responder {
+		fmt.Printf("userId: %d", principal.UserId)
+		userById, err := sessionService.GetUserById(principal.UserId)
+		if err != nil {
+			return user.NewInfoOK().WithPayload(userById)
+		} else {
+			fmt.Println(err)
+			return user.NewInfoInternalServerError()
+		}
+	})
 
-	if api.UserInfoHandler == nil {
-		api.UserInfoHandler = user.InfoHandlerFunc(func(params user.InfoParams, principal *src.Session) middleware.Responder {
-			return middleware.NotImplemented("operation user.Info has not yet been implemented")
-		})
-	}
-	if api.UserLoginHandler == nil {
-		api.UserLoginHandler = user.LoginHandlerFunc(func(params user.LoginParams) middleware.Responder {
-			return middleware.NotImplemented("operation user.Login has not yet been implemented")
-		})
-	}
-	if api.UserLogoutHandler == nil {
-		api.UserLogoutHandler = user.LogoutHandlerFunc(func(params user.LogoutParams, principal *src.Session) middleware.Responder {
-			return middleware.NotImplemented("operation user.Logout has not yet been implemented")
-		})
-	}
-	if api.UserRegisterHandler == nil {
-		api.UserRegisterHandler = user.RegisterHandlerFunc(func(params user.RegisterParams) middleware.Responder {
-			return middleware.NotImplemented("operation user.Register has not yet been implemented")
-		})
-	}
+	api.UserLoginHandler = user.LoginHandlerFunc(func(params user.LoginParams) middleware.Responder {
+		session, err := sessionService.Login(params.Body)
+		if err != nil {
+			return user.NewLoginBadRequest()
+		} else {
+			fmt.Println(err)
+			return user.NewLoginOK().WithPayload(session)
+		}
+	})
+
+	api.UserLogoutHandler = user.LogoutHandlerFunc(func(params user.LogoutParams, principal *src.Session) middleware.Responder {
+		err := sessionService.Logout(principal)
+		if err != nil {
+			return user.NewLogoutUserOK()
+		} else {
+			fmt.Println(err)
+			return user.NewLogoutInternalServerError()
+		}
+	})
+
+	api.UserRegisterHandler = user.RegisterHandlerFunc(func(params user.RegisterParams) middleware.Responder {
+		err := sessionService.CreateUser(*params.Body)
+		if err != nil {
+			return user.NewRegisterNoContent()
+		} else {
+			fmt.Println(err)
+			return user.NewRegisterInternalServerError()
+		}
+	})
 
 	api.PreServerShutdown = func() {}
 
@@ -101,5 +115,5 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
 // So this is a good place to plug in a panic handling middleware, logging and metrics.
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
-	return handler
+	return middlewares.ZerologMiddleware(middlewares.SimpleCors(handler))
 }

@@ -88,6 +88,11 @@ const LoginBadRequestCode int = 400
 swagger:response loginBadRequest
 */
 type LoginBadRequest struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *apimodel.APIError `json:"body,omitempty"`
 }
 
 // NewLoginBadRequest creates LoginBadRequest with default headers values
@@ -96,10 +101,25 @@ func NewLoginBadRequest() *LoginBadRequest {
 	return &LoginBadRequest{}
 }
 
+// WithPayload adds the payload to the login bad request response
+func (o *LoginBadRequest) WithPayload(payload *apimodel.APIError) *LoginBadRequest {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the login bad request response
+func (o *LoginBadRequest) SetPayload(payload *apimodel.APIError) {
+	o.Payload = payload
+}
+
 // WriteResponse to the client
 func (o *LoginBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
 	rw.WriteHeader(400)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }

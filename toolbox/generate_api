@@ -9,4 +9,4 @@ ${basedir}/toolbox/swagger generate server \
   -t ${basedir}/src \
   --principal "haw-hamburg.de/cloudWP/src.Session" \
   --server-package=api \
-  --model-package=apimodel --regenerate-configureapi
+  --model-package=apimodel

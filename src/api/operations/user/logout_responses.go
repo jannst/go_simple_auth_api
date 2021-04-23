@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
+
+	"haw-hamburg.de/cloudWP/src/apimodel"
 )
 
 // LogoutNoContentCode is the HTTP code returned for type LogoutNoContent
@@ -33,4 +35,48 @@ func (o *LogoutNoContent) WriteResponse(rw http.ResponseWriter, producer runtime
 	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 
 	rw.WriteHeader(204)
+}
+
+// LogoutInternalServerErrorCode is the HTTP code returned for type LogoutInternalServerError
+const LogoutInternalServerErrorCode int = 500
+
+/*LogoutInternalServerError logout failed
+
+swagger:response logoutInternalServerError
+*/
+type LogoutInternalServerError struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *apimodel.APIError `json:"body,omitempty"`
+}
+
+// NewLogoutInternalServerError creates LogoutInternalServerError with default headers values
+func NewLogoutInternalServerError() *LogoutInternalServerError {
+
+	return &LogoutInternalServerError{}
+}
+
+// WithPayload adds the payload to the logout internal server error response
+func (o *LogoutInternalServerError) WithPayload(payload *apimodel.APIError) *LogoutInternalServerError {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the logout internal server error response
+func (o *LogoutInternalServerError) SetPayload(payload *apimodel.APIError) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *LogoutInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(500)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }

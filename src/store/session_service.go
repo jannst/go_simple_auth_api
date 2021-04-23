@@ -1,87 +1,147 @@
 package store
 
 import (
-	"bytes"
-	"encoding/json"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
-	"fmt"
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-openapi/strfmt"
 	"haw-hamburg.de/cloudWP/src"
-	"regexp"
+	"haw-hamburg.de/cloudWP/src/api/operations/user"
+	"haw-hamburg.de/cloudWP/src/apimodel"
+	"sync"
 )
 
-const sessionStoreFormat = "sessions:%s"
-
-type SessionService interface {
+type AuthService interface {
 	FetchSession(token string) (*src.Session, error)
-	PersistSession(session src.Session) error
-	DeleteSession(token string) error
+	Login(loginParams user.LoginBody) (*apimodel.AccessTokenResponse, error)
+	Logout(session *src.Session) error
+	CreateUser(user apimodel.NewUser) error
+	GetUserById(userId uint32) (*apimodel.User, error)
 }
 
-type sessionService struct {
-	Pool *redis.Pool
+type internalUser struct {
+	passwordHash string
+	username     string
+	id           uint32
+	email        strfmt.Email
 }
 
-func NewSessionService(pool *redis.Pool) SessionService {
-	return &sessionService{Pool: pool}
+type authServiceImpl struct {
+	users      map[uint32]internalUser
+	sessions   map[string]internalUser
+	nextUserId uint32
+	mu         sync.Mutex
 }
 
-func (s sessionService) FetchSession(token string) (*src.Session, error) {
-	err := ValidateTokenFormat(token)
-	if err == nil {
-		conn := s.Pool.Get()
-		defer conn.Close()
-		reply, err := redis.Bytes(conn.Do("GET", fmt.Sprintf(sessionStoreFormat, token)))
-		if err != nil {
-			return nil, err
-		} else {
-			var session src.Session
-			err := json.NewDecoder(bytes.NewReader(reply)).Decode(&session)
-			if err != nil {
-				return nil, err
-			} else {
-				return &session, nil
-			}
-		}
-	} else {
-		return nil, err
+func NewSessionService() AuthService {
+	return &authServiceImpl{
+		users: map[uint32]internalUser{},
+		sessions: map[string]internalUser{},
 	}
 }
 
-func (s sessionService) PersistSession(session src.Session) error {
-	token := session.SessionToken
-	err := ValidateTokenFormat(token)
-	if err == nil {
-		buf := &bytes.Buffer{}
-		err := json.NewEncoder(buf).Encode(session)
-		if err != nil {
-			return err
-		} else {
-			conn := s.Pool.Get()
-			defer conn.Close()
-			_, err := conn.Do("SET", fmt.Sprintf(sessionStoreFormat, token), buf.Bytes())
-			return err
-		}
+func (s *authServiceImpl) GetUserById(userId uint32) (*apimodel.User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if userById, ok := s.users[userId]; ok {
+		return &apimodel.User{
+			BaseUser: apimodel.BaseUser{
+				Email:    &userById.email,
+				Username: &userById.username,
+			},
+			ID: &userById.id,
+		}, nil
 	} else {
-		return err
+		return nil, errors.New("could not find userById for userId")
 	}
 }
 
-func (s sessionService) DeleteSession(token string) error {
-	conn := s.Pool.Get()
-	defer conn.Close()
-	_, err := conn.Do("DEL", fmt.Sprintf(sessionStoreFormat, token))
-	return err
-}
-
-func ValidateTokenFormat(token string) error {
-	match, err := regexp.MatchString("^[a-f0-9]{32}$", token)
+func (s *authServiceImpl) CreateUser(newUser apimodel.NewUser) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	//check for duplicate email
+	for _, user := range s.users {
+		if user.email == *newUser.Email {
+			return errors.New("email already in use")
+		}
+	}
+	//hash passwordHash
+	password, err := HashPassword(*newUser.Password)
 	if err != nil {
 		return err
-	} else if !match {
-		return errors.New("tokes does not match required format")
+	}
+
+	//add user to "database"
+	s.nextUserId++
+	user := internalUser{
+		passwordHash: password,
+		username:     *newUser.Username,
+		id:           s.nextUserId,
+		email:        *newUser.Email,
+	}
+	s.users[s.nextUserId] = user
+	return nil
+}
+
+func (s *authServiceImpl) FetchSession(token string) (*src.Session, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if user, ok := s.sessions[token]; ok {
+		return &src.Session{
+			SessionToken: token,
+			UserId:       user.id,
+		}, nil
 	} else {
-		return nil
+		return nil, errors.New("session not found")
 	}
 }
 
+func (s *authServiceImpl) Login(loginParams user.LoginBody) (*apimodel.AccessTokenResponse, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, user := range s.users {
+		if user.email == *loginParams.Email {
+			if CheckPasswordHash(*loginParams.Password, user.passwordHash) {
+				sessionToken, err := createNewSessionToken()
+				if err != nil {
+					return nil, err
+				}
+				s.sessions[sessionToken] = user
+				return &apimodel.AccessTokenResponse{
+					Token: &sessionToken,
+					User: &apimodel.User{
+						BaseUser: apimodel.BaseUser{
+							Email:    &user.email,
+							Username: &user.username,
+						},
+						ID: &user.id,
+					},
+				}, nil
+			}
+		}
+	}
+	return nil, errors.New("email not found or invalid password")
+}
+
+func (s *authServiceImpl) Logout(session *src.Session) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, ok := s.sessions[session.SessionToken]; ok {
+		delete(s.sessions, session.SessionToken)
+		return nil
+	} else {
+		return errors.New("session not found")
+	}
+}
+
+func createNewSessionToken() (string, error) {
+	buf := make([]byte, 16)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
+}

@@ -23,10 +23,6 @@ type User struct {
 	// id
 	// Required: true
 	ID *uint32 `json:"id"`
-
-	// User Role
-	// Required: true
-	UserRole *string `json:"user_role"`
 }
 
 // UnmarshalJSON unmarshals this object from a JSON structure
@@ -41,16 +37,12 @@ func (m *User) UnmarshalJSON(raw []byte) error {
 	// AO1
 	var dataAO1 struct {
 		ID *uint32 `json:"id"`
-
-		UserRole *string `json:"user_role"`
 	}
 	if err := swag.ReadJSON(raw, &dataAO1); err != nil {
 		return err
 	}
 
 	m.ID = dataAO1.ID
-
-	m.UserRole = dataAO1.UserRole
 
 	return nil
 }
@@ -66,13 +58,9 @@ func (m User) MarshalJSON() ([]byte, error) {
 	_parts = append(_parts, aO0)
 	var dataAO1 struct {
 		ID *uint32 `json:"id"`
-
-		UserRole *string `json:"user_role"`
 	}
 
 	dataAO1.ID = m.ID
-
-	dataAO1.UserRole = m.UserRole
 
 	jsonDataAO1, errAO1 := swag.WriteJSON(dataAO1)
 	if errAO1 != nil {
@@ -95,10 +83,6 @@ func (m *User) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateUserRole(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -108,15 +92,6 @@ func (m *User) Validate(formats strfmt.Registry) error {
 func (m *User) validateID(formats strfmt.Registry) error {
 
 	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *User) validateUserRole(formats strfmt.Registry) error {
-
-	if err := validate.Required("user_role", "body", m.UserRole); err != nil {
 		return err
 	}
 

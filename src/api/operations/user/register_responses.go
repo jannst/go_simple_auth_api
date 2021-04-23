@@ -9,42 +9,74 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
+
+	"haw-hamburg.de/cloudWP/src/apimodel"
 )
 
-/*RegisterDefault successful operation
+// RegisterNoContentCode is the HTTP code returned for type RegisterNoContent
+const RegisterNoContentCode int = 204
 
-swagger:response registerDefault
+/*RegisterNoContent user created
+
+swagger:response registerNoContent
 */
-type RegisterDefault struct {
-	_statusCode int
+type RegisterNoContent struct {
 }
 
-// NewRegisterDefault creates RegisterDefault with default headers values
-func NewRegisterDefault(code int) *RegisterDefault {
-	if code <= 0 {
-		code = 500
-	}
+// NewRegisterNoContent creates RegisterNoContent with default headers values
+func NewRegisterNoContent() *RegisterNoContent {
 
-	return &RegisterDefault{
-		_statusCode: code,
-	}
-}
-
-// WithStatusCode adds the status to the register default response
-func (o *RegisterDefault) WithStatusCode(code int) *RegisterDefault {
-	o._statusCode = code
-	return o
-}
-
-// SetStatusCode sets the status to the register default response
-func (o *RegisterDefault) SetStatusCode(code int) {
-	o._statusCode = code
+	return &RegisterNoContent{}
 }
 
 // WriteResponse to the client
-func (o *RegisterDefault) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+func (o *RegisterNoContent) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 
-	rw.WriteHeader(o._statusCode)
+	rw.WriteHeader(204)
+}
+
+// RegisterInternalServerErrorCode is the HTTP code returned for type RegisterInternalServerError
+const RegisterInternalServerErrorCode int = 500
+
+/*RegisterInternalServerError internal server error
+
+swagger:response registerInternalServerError
+*/
+type RegisterInternalServerError struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *apimodel.APIError `json:"body,omitempty"`
+}
+
+// NewRegisterInternalServerError creates RegisterInternalServerError with default headers values
+func NewRegisterInternalServerError() *RegisterInternalServerError {
+
+	return &RegisterInternalServerError{}
+}
+
+// WithPayload adds the payload to the register internal server error response
+func (o *RegisterInternalServerError) WithPayload(payload *apimodel.APIError) *RegisterInternalServerError {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the register internal server error response
+func (o *RegisterInternalServerError) SetPayload(payload *apimodel.APIError) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *RegisterInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(500)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }

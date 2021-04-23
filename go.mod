@@ -15,5 +15,6 @@ require (
 	github.com/gomodule/redigo v1.8.4
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/rs/zerolog v1.21.0
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/net v0.0.0-20210421230115-4e50805a0758
 )
